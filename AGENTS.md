@@ -20,7 +20,7 @@ Home Assistant configurations subscribe to these retained topics, so changing a 
 
 ## Configuration and Secrets
 
-The script sources `~/.config/power-monitor-mqtt/config`, or the path in `POWER_MONITOR_MQTT_CONFIG`. `config.example` is the template that `make setup-config` copies there. The real config holds the MQTT password, so never commit a file named `config` and keep `config.example` limited to placeholder values. When adding a setting, update `config.example`, `show_config`, and the Configuration section of `README.md` together.
+The script sources `~/.config/power-monitor-mqtt/config`, or the path in `POWER_MONITOR_MQTT_CONFIG`. `config.example` is the template that `make setup-config` copies there. The real config holds the MQTT password, so never commit a file named `config` and keep `config.example` limited to placeholder values. When adding a setting, update `config.example`, the defaults block and `show_config` in the script, and the Configuration section of `README.md` together.
 
 ## Logging
 
@@ -28,4 +28,4 @@ Logs are written to `LOG_FILE` (default `~/Library/Logs/power-monitor-mqtt/power
 
 ## Verification
 
-There is no automated test suite. `make test` runs `--test`, which needs SAP Power Monitor installed; `--once` additionally needs a reachable broker. Check syntax with `bash -n power-monitor-mqtt.sh` when Power Monitor or a broker is unavailable.
+There is no automated test suite. `make test` runs `--test`, which needs SAP Power Monitor installed; `--once` additionally needs a reachable broker. Run `shellcheck power-monitor-mqtt.sh` after every change. Without Power Monitor or a broker, exercise the script with stub `Power Monitor` and `mosquitto_pub` executables on `PATH` and a config that points `POWER_MONITOR_PATH` at the stub.
