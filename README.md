@@ -1,151 +1,99 @@
 # Power Monitor MQTT Publisher for macOS
 
-A script that retrieves power value (W) from the SAP Power Monitor app for macOS and publishes it to an MQTT broker.
+A Bash script that reads the power draw (W) of a Mac from the SAP Power Monitor app and publishes it to an MQTT broker, for example to track it in Home Assistant.
 
-## Features
-
-- Power value (W) retrieval from SAP Power Monitor
-- Automatic MQTT publishing
-- Test mode, single-run mode, and continuous monitoring mode
+It can check the Power Monitor connection without publishing, publish once for use with a scheduler, or run continuously at a fixed interval.
 
 ## Requirements
 
-- [SAP Power Monitor](https://github.com/SAP/power-monitoring-tool-for-macos)
-- [Homebrew](https://brew.sh/)
+- [SAP Power Monitor](https://github.com/SAP/power-monitoring-tool-for-macos): download the latest `.pkg` from the [releases page](https://github.com/SAP/power-monitoring-tool-for-macos/releases) and install it.
+- [Homebrew](https://brew.sh/), used to install `mosquitto` and `jq`.
 
 ## Installation
 
-### Prerequisites
+Clone the repository:
 
-#### Install SAP Power Monitor:
-
-1. Visit the [SAP Power Monitor releases page](https://github.com/SAP/power-monitoring-tool-for-macos/releases)
-2. Download the latest `.pkg` file
-3. Install the downloaded file
-
-#### Install Homebrew
-
-1. Visit the [Homebrew page](https://brew.sh/)
-2. Copy the installation command and run it in your terminal
-
-### Automatic Installation (Recommended)
-
-1. Clone the repository:
 ```bash
-git clone git@github.com:rewse/power-monitor-mqtt.git
-cd power-monitor-mqtt
+git clone https://github.com/rewse/mac-power-monitor-mqtt.git
+cd mac-power-monitor-mqtt
 ```
 
-2. Install dependencies:
-This will install `mosquitto` and `jq`.
+### With make (Recommended)
+
+Install `mosquitto` and `jq`, then install the script to `~/.local/bin` and a configuration file to `~/.config/power-monitor-mqtt/config`. An existing configuration file is left untouched.
+
 ```bash
 make deps
-```
-
-3. Install the script:
-The script will be installed to `~/.local/bin` and configuration files to `~/.config/power-monitor-mqtt`.
-```bash
 make install
 ```
 
-4. Edit the configuration file:
+Edit the configuration file before running the script:
+
 ```bash
 vim ~/.config/power-monitor-mqtt/config
 ```
 
-#### Makefile Commands
-
-Available Makefile commands:
+Other targets:
 
 ```bash
 make help         # Show help message
-make deps         # Install dependencies (mosquitto, jq)
-make install      # Install script and config file
-make test         # Run script in test mode
-make clean        # Remove config file
-make uninstall    # Remove installed script
+make test         # Run the script in test mode
+make uninstall    # Remove the installed script
+make clean        # Remove ~/.config/power-monitor-mqtt, including the config file
 ```
 
-### Manual Installation
+### Manually
 
-**Note**: Make sure you have completed the Prerequisites section above before proceeding.
-
-1. Clone the repository:
-```bash
-git clone git@github.com:rewse/power-monitor-mqtt.git
-cd power-monitor-mqtt
-```
-
-2. Install dependencies manually:
 ```bash
 brew install mosquitto jq
-```
-
-3. Create configuration file:
-```bash
-mkdir -p ~/.config/power-monitor-mqtt
+mkdir -p ~/.local/bin ~/.config/power-monitor-mqtt
+cp power-monitor-mqtt.sh ~/.local/bin/
 cp config.example ~/.config/power-monitor-mqtt/config
-```
-
-4. Edit the configuration file:
-```bash
 vim ~/.config/power-monitor-mqtt/config
 ```
 
 ## Configuration
 
-Configure the following items in the configuration file (`~/.config/power-monitor-mqtt/config`):
+The script reads `~/.config/power-monitor-mqtt/config`. Set the `POWER_MONITOR_MQTT_CONFIG` environment variable to use a different file.
 
-- `MQTT_HOST`: MQTT broker hostname
-- `MQTT_PORT`: MQTT broker port (default: `1883`)
-- `MQTT_USERNAME`: MQTT authentication username (default: `pub_client`)
-- `MQTT_PASSWORD`: MQTT authentication password
-- `TOPIC_PREFIX`: MQTT topic prefix (default: `power-monitor`)
-- `DEVICE_NAME`: Device name (default: Mac's *hostname*)
-- `INTERVAL`: Data transmission interval for continuous mode (default: `60` seconds)
+| Setting | Description | Default in `config.example` |
+|---|---|---|
+| `MQTT_HOST` | MQTT broker hostname | `mqtt.example.com` |
+| `MQTT_PORT` | MQTT broker port | `1883` |
+| `MQTT_USERNAME` | MQTT username | `pub_client` |
+| `MQTT_PASSWORD` | MQTT password | |
+| `TOPIC_PREFIX` | Topic prefix | `power-monitor` |
+| `DEVICE_NAME` | Device name used in topics | The Mac's short hostname |
+| `INTERVAL` | Seconds between publishes in continuous mode | `60` |
+| `POWER_MONITOR_PATH` | Path to the Power Monitor executable | `/Applications/Power Monitor.app/Contents/MacOS/Power Monitor` |
+| `LOG_FILE` | Log file path | `~/Library/Logs/power-monitor-mqtt/power-monitor-mqtt.log` |
+| `LOG_MAX_SIZE` | Log size in bytes that triggers rotation | `1000000` |
+| `LOG_MAX_FILES` | Number of rotated log files to keep | `4` |
+| `DEBUG_MODE` | Write debug messages to the log | `false` |
 
 ## Usage
 
-### Test Mode
-
-Retrieves data from SAP Power Monitor only, without sending to MQTT broker.
-
 ```bash
-./power-monitor-mqtt.sh --test
+power-monitor-mqtt.sh --test    # Print Power Monitor data without publishing
+power-monitor-mqtt.sh --once    # Publish once and exit
+power-monitor-mqtt.sh           # Publish every INTERVAL seconds until stopped
+power-monitor-mqtt.sh --config  # Show the effective configuration
 ```
 
-### Single Run
+If `~/.local/bin` is not on your `PATH`, run the script by its full path. Use `--once` with a scheduler such as Keyboard Maestro, a LaunchAgent, or cron.
 
-Sends power value to MQTT broker once. Use with helper tool like Keyboard Maestro, LaunchAgent, or cron for periodic execution.
-
-```bash
-./power-monitor-mqtt.sh --once
-```
-
-### Continuous Mode
-
-Runs persistently at INTERVAL intervals.
-
-```bash
-./power-monitor-mqtt.sh
-```
-
-### Show Configuration
-```bash
-./power-monitor-mqtt.sh --config
-```
+Logs go to `LOG_FILE` and to stderr. The log file is rotated when it reaches `LOG_MAX_SIZE`.
 
 ## MQTT Topics
 
-The script publishes data to the following topics:
+The script publishes retained messages to these topics:
 
-- `{TOPIC_PREFIX}/{DEVICE_NAME}/power/current` - Power value (W)
-- `{TOPIC_PREFIX}/{DEVICE_NAME}/power/average` - Average power value (W)
-- `{TOPIC_PREFIX}/{DEVICE_NAME}/status` - Status information
+- `{TOPIC_PREFIX}/{DEVICE_NAME}/power/current`: current power (W)
+- `{TOPIC_PREFIX}/{DEVICE_NAME}/power/average`: average power (W)
+- `{TOPIC_PREFIX}/{DEVICE_NAME}/status`: status information
 
-### Data Format
+The `power/current` and `power/average` payloads look like this:
 
-#### Power value (current / average)
 ```json
 {
   "value": 45.2,
@@ -154,56 +102,42 @@ The script publishes data to the following topics:
 }
 ```
 
-#### Status Information
+The `status` payload looks like this:
 
 ```json
 {
   "measurements": 150,
   "country_code": "unknown",
   "precise_location": false,
-  "carbon_footprint": -1,
+  "carbon_footprint": "-1",
   "timestamp": "2024-12-16T16:30:00+09:00"
 }
 ```
-**Note**: As of now, `country_code`, `precise_location`, and `carbon_footprint` do not return correct values from SAP Power Monitor.
 
-## Log Viewing
+SAP Power Monitor does not currently return correct values for `country_code`, `precise_location`, and `carbon_footprint`.
 
-Logs are written to `~/Library/Logs/power-monitor-mqtt/power-monitor-mqtt.log` by default. The log file is automatically rotated when it reaches the maximum size.
+## Running Periodically with Keyboard Maestro
 
-## Periodic Execution Setup Example
+To use the bundled macro, download [Execute-power-monitor-mqtt.kmmacros](Execute-power-monitor-mqtt.kmmacros), import it in Keyboard Maestro with `File > Import > Import Macros Safely...`, and adjust the interval if needed.
 
-### Using Keyboard Maestro
+To create the macro yourself:
 
-#### Import Pre-configured Macro
+1. Create a new macro, for example "Execute power-monitor-mqtt".
+2. Add the trigger "Periodically while logged in" with the interval "Repeating every 1 Minutes", or whatever interval you prefer.
+3. Add an "Execute a Shell Script" action with this script:
+   ```bash
+   PATH=/opt/homebrew/bin:$PATH ~/.local/bin/power-monitor-mqtt.sh --once
+   ```
+4. Save the macro.
 
-1. Download [Execute-power-monitor-mqtt.kmmacros](https://github.com/rewse/power-monitor-mqtt/blob/main/Execute-power-monitor-mqtt.kmmacros)
-2. Open Keyboard Maestro
-3. Import the macro:
-   - Go to `File > Import > Import Macros Safely...`
-   - Select the downloaded `.kmmacros` file
-4. Review and adjust the interval if needed
-#### Manual Setup
+![Keyboard Maestro configuration](docs/keyboard-maestro.png)
 
-1. Open Keyboard Maestro
-2. Create a new macro with a descriptive name (e.g., "Execute power-monitor-mqtt")
-3. Set the trigger:
-   - Type: "Periodically while logged in"
-   - Interval: "Repeating every 1 Minutes" (adjust as needed)
-4. Add an action:
-   - Type: "Execute a Shell Script"
-   - Script content: `PATH=/opt/homebrew/bin:$PATH ~/.local/bin/power-monitor-mqtt.sh --once`
-5. Save the macro
-
-![Keyboard Meastro Configuration](https://github.com/rewse/power-monitor-mqtt/blob/main/docs/keyboard-maestro.png)
-
-**Note**: The `PATH` environment variable must include `/opt/homebrew/bin` (or `/usr/local/bin` for Intel Macs) to ensure `mosquitto_pub` and `jq` commands are accessible.
+Keyboard Maestro does not load your shell's `PATH`, so the script adds `/opt/homebrew/bin` to find `mosquitto_pub` and `jq`. On an Intel Mac, use `/usr/local/bin` instead.
 
 ## Home Assistant Integration
 
-Example configuration for Home Assistant:
+### MQTT Sensors
 
-### MQTT Sensor Configuration
 ```yaml
 mqtt:
   sensor:
@@ -220,18 +154,12 @@ mqtt:
       device_class: power
 ```
 
-### Power Measurement Accuracy Note
+### Measurement Accuracy
 
-**Important**: The power values reported by macOS internal sensors are typically 15-25% lower than actual AC power consumption measured by external devices (smart plugs, power meters). This difference is due to:
+The values from the Mac's internal sensors are typically 15-25% lower than the AC power measured by an external device such as a smart plug or power meter. The power adapter loses 10-20% in AC-DC conversion, and the motherboard and components lose more in their own power conversion. The internal sensors may also miss some components and connected devices, and their values are often estimates based on component usage.
 
-- **AC-DC conversion efficiency**: Power adapter losses (10-20%)
-- **Internal power conversion**: Motherboard and component efficiency losses
-- **Measurement scope**: Internal sensors may not account for all components and external devices
-- **Measurement methodology**: Internal values are often estimates based on component usage
+If you need closer numbers, for example to estimate electricity cost, apply a correction factor. This template sensor adds 20%:
 
-For more accurate power consumption calculations (e.g., electricity cost estimation), consider using a correction factor.
-
-### Corrected Power Sensor (20% Increase)
 ```yaml
 template:
   - sensor:
@@ -246,7 +174,10 @@ template:
         state: "{{ (states('sensor.my_mac_power_average') | float(0) * 1.2) }}"
 ```
 
-### Power Consumption (kWh) Calculation with [Integral Sensor](https://www.home-assistant.io/integrations/integration/)
+### Energy (kWh)
+
+Use the [Integral sensor](https://www.home-assistant.io/integrations/integration/) to turn power into energy:
+
 ```yaml
 sensor:
   # Using raw internal sensor values
