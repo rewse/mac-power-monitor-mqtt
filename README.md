@@ -20,7 +20,7 @@ cd mac-power-monitor-mqtt
 
 ### With make (Recommended)
 
-Install `mosquitto` and `jq`, then install the script to `~/.local/bin` and a configuration file to `~/.config/power-monitor-mqtt/config`. An existing configuration file is left untouched.
+Install `mosquitto` and `jq`, then install the script to `~/.local/bin` and a configuration file to `~/.config/power-monitor-mqtt/config`. The configuration file is readable only by you, and an existing one is left untouched.
 
 ```bash
 make deps
@@ -39,7 +39,7 @@ Other targets:
 make help         # Show help message
 make test         # Run the script in test mode
 make uninstall    # Remove the installed script
-make clean        # Remove ~/.config/power-monitor-mqtt, including the config file
+make clean        # Remove ~/.config/power-monitor-mqtt and ~/Library/Logs/power-monitor-mqtt
 ```
 
 ### Manually
@@ -49,6 +49,7 @@ brew install mosquitto jq
 mkdir -p ~/.local/bin ~/.config/power-monitor-mqtt
 cp power-monitor-mqtt.sh ~/.local/bin/
 cp config.example ~/.config/power-monitor-mqtt/config
+chmod 600 ~/.config/power-monitor-mqtt/config
 vim ~/.config/power-monitor-mqtt/config
 ```
 
