@@ -1,0 +1,4 @@
+# config.example is only ever sourced by power-monitor-mqtt.sh, never passed
+# to shellcheck directly, so SC1091 needs this to follow the `source=`
+# directive on the sourcing line.
+external-sources=true
