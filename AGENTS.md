@@ -26,6 +26,8 @@ The script sources `~/.config/power-monitor-mqtt/config`, or the path in `POWER_
 
 Logs are written to `LOG_FILE` (default `~/Library/Logs/power-monitor-mqtt/power-monitor-mqtt.log`) and echoed to stderr, with levels INFO, ERROR, and DEBUG (DEBUG only when `DEBUG_MODE=true`). `rotate_log` rotates the file by `LOG_MAX_SIZE` and `LOG_MAX_FILES`. Read logs from that file; the script does not use the macOS unified log.
 
-## Verification
+## Validation
 
-There is no automated test suite. `make test` runs `--test`, which needs SAP Power Monitor installed; `--once` additionally needs a reachable broker. Run `shellcheck power-monitor-mqtt.sh` after every change. Without Power Monitor or a broker, exercise the script with stub `Power Monitor` and `mosquitto_pub` executables on `PATH` and a config that points `POWER_MONITOR_PATH` at the stub.
+Before pushing, run `uvx pre-commit run --all-files`, which includes shellcheck, and commit any files the hooks reformat. Stage new files first, because `--all-files` skips untracked files. CI runs the same hooks, and `core.hooksPath` points at git-defender, so `pre-commit install` cannot run them at commit time.
+
+There is no automated test suite. `make test` runs `--test`, which needs SAP Power Monitor installed; `--once` additionally needs a reachable broker. Without Power Monitor or a broker, exercise the script with stub `Power Monitor` and `mosquitto_pub` executables on `PATH` and a config that points `POWER_MONITOR_PATH` at the stub.
