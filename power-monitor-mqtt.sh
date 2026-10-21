@@ -18,6 +18,8 @@ fi
 : "${MQTT_PORT:=1883}"
 : "${MQTT_USERNAME:=}"
 : "${MQTT_PASSWORD:=}"
+: "${MQTT_TLS:=false}"
+: "${MQTT_CAFILE:=}"
 : "${TOPIC_PREFIX:=power-monitor}"
 : "${DEVICE_NAME:=$(hostname -s)}"
 : "${INTERVAL:=60}"
@@ -118,6 +120,14 @@ publish_mqtt() {
     local attempt output
     local args=(-r -t "${topic}" -h "${MQTT_HOST}" -p "${MQTT_PORT}" -m "${payload}")
 
+    if [[ "${MQTT_TLS}" == "true" ]]; then
+        if [[ -n "${MQTT_CAFILE}" ]]; then
+            args+=(--cafile "${MQTT_CAFILE}")
+        else
+            args+=(--tls-use-os-certs)
+        fi
+    fi
+
     for (( attempt = 1; attempt <= MAX_PUBLISH_ATTEMPTS; attempt++ )); do
         log "DEBUG" "Publishing ${payload} to ${topic} (attempt ${attempt}/${MAX_PUBLISH_ATTEMPTS})"
         if output="$(run_mosquitto_pub "${args[@]}" 2>&1)"; then
@@ -210,6 +220,8 @@ Current configuration:
   MQTT host: ${MQTT_HOST}
   MQTT port: ${MQTT_PORT}
   MQTT username: ${MQTT_USERNAME}
+  MQTT TLS: ${MQTT_TLS}
+  MQTT CA file: ${MQTT_CAFILE}
   Topic prefix: ${TOPIC_PREFIX}
   Device name: ${DEVICE_NAME}
   Interval: ${INTERVAL} seconds

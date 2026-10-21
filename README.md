@@ -63,6 +63,8 @@ The script reads `~/.config/power-monitor-mqtt/config`. Set the `POWER_MONITOR_M
 | `MQTT_PORT` | MQTT broker port | `1883` |
 | `MQTT_USERNAME` | MQTT username | `pub_client` |
 | `MQTT_PASSWORD` | MQTT password | |
+| `MQTT_TLS` | Connect to the broker over TLS | `false` |
+| `MQTT_CAFILE` | CA certificate file that verifies the broker when `MQTT_TLS=true`; empty uses the system's trusted CA certificates | |
 | `TOPIC_PREFIX` | Topic prefix | `power-monitor` |
 | `DEVICE_NAME` | Device name used in topics | The Mac's short hostname |
 | `INTERVAL` | Seconds between publishes in continuous mode | `60` |
@@ -71,6 +73,8 @@ The script reads `~/.config/power-monitor-mqtt/config`. Set the `POWER_MONITOR_M
 | `LOG_MAX_SIZE` | Log size in bytes that triggers rotation | `1000000` |
 | `LOG_MAX_FILES` | Number of rotated log files to keep | `4` |
 | `DEBUG_MODE` | Write debug messages to the log | `false` |
+
+The connection is unencrypted by default, which suits a broker on a trusted home network. For a remote or cloud broker, set `MQTT_TLS=true` so the password and readings are encrypted and the broker's certificate is verified; this usually also needs `MQTT_PORT="8883"`.
 
 ## Usage
 

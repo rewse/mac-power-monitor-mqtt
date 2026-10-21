@@ -6,6 +6,11 @@ MQTT_HOST="mqtt.example.com"
 MQTT_PORT="1883"
 MQTT_USERNAME="pub_client"
 MQTT_PASSWORD="your_mqtt_password"
+# Set MQTT_TLS=true to encrypt the connection, usually with MQTT_PORT="8883".
+# MQTT_CAFILE is the CA certificate that verifies the broker; leave it empty
+# to use the system's trusted CA certificates.
+MQTT_TLS=false
+MQTT_CAFILE=""
 
 # MQTT topic configuration
 TOPIC_PREFIX="power-monitor"
