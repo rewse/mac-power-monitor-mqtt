@@ -89,19 +89,38 @@ get_power_data() {
     echo "${json}"
 }
 
+# Prints the credentials in mosquitto_pub options-file format, one option per
+# line. mosquitto_pub takes everything after the first space as the value, so
+# a password may contain spaces but not a newline.
+credential_options() {
+    if [[ -n "${MQTT_USERNAME}" ]]; then
+        printf -- '-u %s\n' "${MQTT_USERNAME}"
+    fi
+    if [[ -n "${MQTT_PASSWORD}" ]]; then
+        printf -- '-P %s\n' "${MQTT_PASSWORD}"
+    fi
+}
+
+# Runs mosquitto_pub with the given arguments. The credentials go through an
+# options file read from a pipe rather than argv, because any local account
+# can read another process's argv with ps.
+run_mosquitto_pub() {
+    if [[ -n "${MQTT_USERNAME}" || -n "${MQTT_PASSWORD}" ]]; then
+        mosquitto_pub -o <(credential_options) "$@"
+    else
+        mosquitto_pub "$@"
+    fi
+}
+
 publish_mqtt() {
     local topic="$1"
     local payload="$2"
     local attempt output
-    local args=(-r -t "${topic}")
-
-    [[ -n "${MQTT_USERNAME}" ]] && args+=(-u "${MQTT_USERNAME}")
-    [[ -n "${MQTT_PASSWORD}" ]] && args+=(-P "${MQTT_PASSWORD}")
-    args+=(-h "${MQTT_HOST}" -p "${MQTT_PORT}" -m "${payload}")
+    local args=(-r -t "${topic}" -h "${MQTT_HOST}" -p "${MQTT_PORT}" -m "${payload}")
 
     for (( attempt = 1; attempt <= MAX_PUBLISH_ATTEMPTS; attempt++ )); do
         log "DEBUG" "Publishing ${payload} to ${topic} (attempt ${attempt}/${MAX_PUBLISH_ATTEMPTS})"
-        if output="$(mosquitto_pub "${args[@]}" 2>&1)"; then
+        if output="$(run_mosquitto_pub "${args[@]}" 2>&1)"; then
             log "INFO" "Successfully published to ${topic}"
             return 0
         fi
