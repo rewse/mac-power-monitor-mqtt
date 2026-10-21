@@ -30,11 +30,11 @@
 						<key>MacroActionType</key>
 						<string>ExecuteShellScript</string>
 						<key>Path</key>
-						<string>~/.local/bin/power-monitor-mqtt --once</string>
+						<string>~/.local/bin/power-monitor-mqtt.sh --once</string>
 						<key>Source</key>
 						<string>Nothing</string>
 						<key>Text</key>
-						<string>PATH=/opt/homebrew/bin:$PATH ~/.local/bin/power-monitor-mqtt --once</string>
+						<string>PATH=/opt/homebrew/bin:$PATH ~/.local/bin/power-monitor-mqtt.sh --once</string>
 						<key>TimeOutAbortsMacro</key>
 						<true/>
 						<key>TrimResults</key>
