@@ -47,8 +47,10 @@
 				</array>
 				<key>CreationDate</key>
 				<real>787506149.620857</real>
+				<key>CustomIconData</key>
+				<string>KMEP-GenericApplication-/Applications/Power Monitor.app</string>
 				<key>ModificationDate</key>
-				<real>787579352.150069</real>
+				<real>814512835.89018595</real>
 				<key>Name</key>
 				<string>Execute power-monitor-mqtt</string>
 				<key>Triggers</key>
