@@ -78,6 +78,10 @@ require_power_monitor() {
 
 require_mqtt_config() {
     [[ -n "${MQTT_HOST}" ]] || die "MQTT_HOST is not set in ${CONFIG_FILE}"
+    # publish_mqtt enables TLS only for the exact value true, so any other
+    # spelling would silently fall back to plaintext.
+    [[ "${MQTT_TLS}" == "true" || "${MQTT_TLS}" == "false" ]] \
+        || die "MQTT_TLS must be true or false, got '${MQTT_TLS}'"
 }
 
 get_power_data() {

@@ -63,7 +63,7 @@ The script reads `~/.config/power-monitor-mqtt/config`. Set the `POWER_MONITOR_M
 | `MQTT_PORT` | MQTT broker port | `1883` |
 | `MQTT_USERNAME` | MQTT username | `pub_client` |
 | `MQTT_PASSWORD` | MQTT password | |
-| `MQTT_TLS` | Connect to the broker over TLS | `false` |
+| `MQTT_TLS` | Connect to the broker over TLS: `true` or `false`; any other value stops the script with an error | `false` |
 | `MQTT_CAFILE` | CA certificate file that verifies the broker when `MQTT_TLS=true`; empty uses the system's trusted CA certificates | |
 | `TOPIC_PREFIX` | Topic prefix | `power-monitor` |
 | `DEVICE_NAME` | Device name used in topics | The Mac's short hostname |
